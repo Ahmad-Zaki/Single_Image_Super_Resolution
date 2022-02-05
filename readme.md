@@ -99,7 +99,7 @@ python train.py <path/to/dataset>
 ```
 the dataset directory should have a 'HR' folder which contains high resolution images, and a 'LR' folder which contains low resolution images.
 
-And if you'd like to test out model on an image, you can execute resolve_image.py and pass the image path as an argument. The output will be saved in the 'results' directory
+And if you'd like to test our model on an image, you can execute resolve_image.py and pass the image path as an argument. The output will be saved in the 'results' directory
 
 ```
 python resolve_image.py <path/to/the/image>
