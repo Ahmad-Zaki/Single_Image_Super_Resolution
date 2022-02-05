@@ -2,6 +2,9 @@ from data_loader import Div2kLoader
 from models import edsr, srgan_discriminator
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.applications.vgg19 import VGG19, preprocess_input
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy
 import tensorflow as tf
 
 class SrganTrainer():
@@ -68,7 +71,9 @@ class SrganTrainer():
         self.learning_rate = learning_rate
         
         # Build the VGG network used in calculating the content Loss
-        
+        self.vgg = self._vgg_54_model()
+        self._mean_squared_error = MeanSquaredError()
+        self._binary_cross_entropy = BinaryCrossentropy(from_logits=False)    
 
     def train_generator(self, epochs: int = 150, starting_weights: str = None, batch_size: int = 32, loss: str = "mae"):
         """Trains the generator model on its own. This is important before training SRGAN because the resulting weights
@@ -168,7 +173,7 @@ class SrganTrainer():
             generator.save_weights(f"model_weights/gen/{generator.name}_X4_SRGAN-{step}.h5")
             print("#############\nWeights Saved\n#############\n")
 
-    
+    @tf.function
     def _train_step(self, lr, hr):
         """SRGAN training step.
         
@@ -185,11 +190,10 @@ class SrganTrainer():
             sr_output = self.discriminator(sr, training=True)
 
             # Compute losses
-            con_loss = None
-            gen_loss = None
-            perc_loss = None
-            disc_loss = None
-
+            con_loss = self._content_loss(hr, sr)
+            gen_loss = self._adversarial_loss(sr_output)
+            perc_loss = con_loss + 0.001 * gen_loss
+            disc_loss = self._discriminator_loss(hr_output, sr_output)
 
 
         # Compute gradient of perceptual loss w.r.t. generator weights 
@@ -206,6 +210,29 @@ class SrganTrainer():
     
    
     #loss_functions
+    def _vgg_54_model(self):
+        """Creates a VGG model used in calculating the content loss.
+        Uses the 4th convolution before the 5th pooling layer as an output layer."""
+        vgg = VGG19(input_shape=self.hr_shape, include_top=False)
+        vgg = Model(vgg.input, vgg.layers[20].output)
+        return vgg
+
+    @tf.function
+    def _content_loss(self,original, generated):
+      generated_preprocessed = preprocess_input(generated)
+      original_preprocessed = preprocess_input(original)
+
+      sr_features = self.vgg(generated_preprocessed)/12.75
+      hr_features = self.vgg(original_preprocessed)/12.75
+      return self._mean_squared_error(hr_features, sr_features)
+
+    def _adversarial_loss(self, sr_out):
+      return self._binary_cross_entropy(tf.ones_like(sr_out), sr_out)
+
+    def _discriminator_loss(self, hr_out, sr_out):
+      hr_loss = self._binary_cross_entropy(tf.ones_like(hr_out), hr_out)
+      sr_loss = self._binary_cross_entropy(tf.zeros_like(sr_out), sr_out)
+      return hr_loss + sr_loss
    
               
 if __name__ == '__main__':
