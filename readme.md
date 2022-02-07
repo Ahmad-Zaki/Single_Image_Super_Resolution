@@ -1,7 +1,7 @@
 # Single Image Super-Resolution (SISR) with SRResNet, EDSR and SRGAN
 
 ![Result](docs/images/headline.png)
-
+### **->Try it on your own images [here](https://thesuperme.herokuapp.com/).**
 ## Introduction
 
 Image super-resolution (SR) is the process of recovering high-resolution (HR) images from low-resolution (LR) images. It is an important class of image processing techniques in computer vision and image processing and enjoys a wide range of real-world applications, such as medical imaging, satellite imaging, surveillance and security, astronomical imaging, amongst others.
@@ -99,8 +99,9 @@ python train.py <path/to/dataset>
 ```
 the dataset directory should have a 'HR' folder which contains high resolution images, and a 'LR' folder which contains low resolution images.
 
-And if you'd like to test our model on an image, you can execute resolve_image.py and pass the image path as an argument. The output will be saved in the 'results' directory
+And if you'd like to test our model on an image, you can execute resolve_image.py and pass the image path as an argument. The output will be saved in the 'results' directory.
 
 ```
 python resolve_image.py <path/to/the/image>
 ```
+Or you can easily use our web interface by going [here](https://thesuperme.herokuapp.com/).
